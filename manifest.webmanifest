@@ -1,0 +1,16 @@
+{
+  "name": "90-Day Recomp Tracker",
+  "short_name": "Recomp",
+  "description": "90-day workout and Maharashtrian diet tracker",
+  // "start_url": "./90_day_body_recomposition_crm.html",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c0a22",
+  "theme_color": "#0c0a22",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
