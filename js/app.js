@@ -300,28 +300,16 @@ function macrosOf(items){
   });
   return {kcal:Math.round(k), p:Math.round(p), f:Math.round(f)};
 }
-function applySwap(meals, slot, fromId, addId, addG, removeG, label, note, dishBit){
-  const meal=meals.find(m=>m.id===slot);
-  const item=meal.items.find(it=>it.id===fromId);
-  item.g-=removeG;
-  meal.items.push({id:addId, g:addG, label});
-  meal.dish+=dishBit;
-  meal.note=note;
-}
 function menuFor(day){
-  const src=MENUS[day.i%3];
-  const dow=day.d.getDay();
-  const paneer=dow===3 || dow===6;
-  const soy=dow===1 || dow===4;
+  const src=MENUS[day.i%7];
   const meals=src.meals.map(m=>({
-    id:m.id, title:m.title, dish:m.dish, note:'',
+    id:m.id, title:m.title, dish:m.dish, note:m.note||'',
     items:m.items.map(it=>({id:it.id, g:it.g, label:it.label}))
   }));
-  if(paneer) applySwap(meals, src.paneerSlot, src.paneerFrom, 'paneer', 50, 38, 'paneer, as bhurji or palak paneer', '50 g paneer replaces part of the dal. It is not an extra on top of the full dal.', ' + paneer');
-  if(soy) applySwap(meals, src.soySlot, src.soyFrom, 'soya', 20, 28, 'dry soya chunks, cooked as usal', '20 g dry soya chunks replace part of the dal. They swell once cooked.', ' + soya usal');
   const macros=meals.map(m=>macrosOf(m.items));
   const totals=macros.reduce((a,m)=>({kcal:a.kcal+m.kcal, p:a.p+m.p, f:a.f+m.f}), {kcal:0, p:0, f:0});
-  return {cycle:day.i%3, name:src.name, short:src.short, paneer, soy, meals, macros, totals};
+  const ids=meals.flatMap(m=>m.items.map(it=>it.id));
+  return {cycle:day.i%7, name:src.name, short:src.short, paneer:ids.includes('paneer'), soy:ids.includes('soya'), meals, macros, totals};
 }
 function portionLine(it){
   if(it.id==='oil') return '½ teaspoon oil';
@@ -336,8 +324,8 @@ function macroHTML(m){
   </div>`;
 }
 function plateNote(plate){
-  if(plate.paneer) return 'Paneer day. Paneer is only on Wednesday and Saturday.';
-  if(plate.soy) return 'Soya day. Soya chunks are only on Monday and Thursday.';
+  if(plate.paneer) return 'Paneer day. This is the only paneer meal in the 7-day cycle.';
+  if(plate.soy) return 'Soya day. This is the only soya meal in the 7-day cycle.';
   return 'No paneer or soya today.';
 }
 function mealHTML(day, meal, macro){
@@ -360,7 +348,7 @@ function mealHTML(day, meal, macro){
 function dietCard(day, on){
   const plate=menuFor(day);
   return `<article class="card diet-card ${on?'is-on':''}">
-    <p class="kicker">Meal day ${plate.cycle+1} of 3 · ${esc(plate.name)}</p>
+    <p class="kicker">Meal day ${plate.cycle+1} of 7 · ${esc(plate.name)}</p>
     <h2>${esc(fmt(day.d, true))}</h2>
     <p class="muted" style="margin:6px 0 0">${esc(plateNote(plate))}</p>
     ${macroHTML(plate.totals)}
@@ -387,14 +375,14 @@ function renderDiet(){
   return `<div class="stack">
     <section class="card">
       <h2>Maharashtrian plate</h2>
-      <p class="muted" style="margin-top:0">Normal home food for three days, then it repeats. No egg, chicken, fish, meat, or protein shake. Every lunch has a bhakri. Dinner changes.</p>
+      <p class="muted" style="margin-top:0">Normal home food for seven days, then it repeats. No egg, chicken, fish, meat, or protein powder. Every lunch has one bhakri. Dahi is at lunch only.</p>
       <div class="pills">
-        <span class="pill">1,500–1,800 kcal</span>
-        <span class="pill">120 g+ protein</span>
-        <span class="pill">Paneer · Wed and Sat</span>
-        <span class="pill">Soya · Mon and Thu</span>
+        <span class="pill">1,650–1,800 kcal</span>
+        <span class="pill">115–125 g protein</span>
+        <span class="pill">Paneer · 1 day</span>
+        <span class="pill">Soya · 1 day</span>
       </div>
-      <p class="muted" style="margin:10px 0 0">The protein is dal, besan, sprouts, peanuts, skimmed milk, and low-fat dahi. Portions are bigger than a usual thali so the day reaches 120 g. Use about ½ teaspoon of oil in a dish. Full-cream milk will push the day over 1,800 kcal.</p>
+      <p class="muted" style="margin:10px 0 0">Protein comes from dal, besan, sprouts, skimmed milk, and low-fat dahi at lunch. Paneer is one lunch in the cycle. Soya chunks are one dinner. Use about ½ teaspoon of oil in a cooked dish. Full-cream milk will push the day over 1,800 kcal.</p>
     </section>
     <div class="card">
       <div class="week-bar">
@@ -538,7 +526,7 @@ function restHTML(day){
   return `<div class="stack">
     <div class="card">
       <h2>Recovery</h2>
-      <p class="muted" style="margin:0">No gym session. Sleep, food, and water come first. A short walk and these stretches are optional.</p>
+      <p class="muted" style="margin:0">No gym session. Sleep, food, and water come first. An easy walk and these stretches are recovery, not a workout.</p>
     </div>
     <div class="session-label"><h3>Easy mobility</h3><span class="muted">${done}/${parts.stretch.length}</span></div>
     ${parts.stretch.map(item=>stepRow(day, item, prog)).join('')}
