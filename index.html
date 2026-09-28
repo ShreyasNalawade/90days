@@ -5,67 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0c0a22">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%233d6ef5%22%2F%3E%3Ctext%20x%3D%2232%22%20y%3D%2234%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%20font-family%3D%22Segoe%20UI%2CArial%2Csans-serif%22%20font-size%3D%2232%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3E90%3C%2Ftext%3E%3C%2Fsvg%3E" type="image/svg+xml">
-<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEzSURBVFhH7ZQrT0NBEIX7x7BoNBpdR1KBo44EgazEICpbi0BV9wegcHhKnyz5bnKa6enN7hUUQrKTnOzdzdyZb2YfvbP+R/pL9Xzht1UBKkAF+B8Ag9EyTWeb9DLfptFknc6vj32u7j7T0/O68WG8uFkc+bSpCEBCt/nr7gCi/7B0l8a6QGQBLoeLfbD78eogEXP5vb1/NWtUHn2Ye0xXFuD2cbUPpjUSY3SBOa2XqSvyAcxjujoDKHjckugTk0Uoj+nKArCH0ag6Gj6qlsOn/34MAHEDonkHTg6AaD9BGQWghG3nJEJ7LFcRIF63eCtI7GtAssabgTF6PFcRgEolmb8D8WzEbwHlVARQNTJA/CWkC3oLZGyDx2pTEQCRgGpKL5v8HDCnTgCnVAWoABWgAlSAb0GfA+cV/UhUAAAAAElFTkSuQmCC">
-<link rel="icon" type="image/png" sizes="192x192" href="data:image/png;base64,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">
-<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
-<link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Recomp">
 <meta name="application-name" content="Recomp">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%233d6ef5%22%2F%3E%3Ctext%20x%3D%2232%22%20y%3D%2234%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%20font-family%3D%22Segoe%20UI%2CArial%2Csans-serif%22%20font-size%3D%2232%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3E90%3C%2Ftext%3E%3C%2Fsvg%3E" type="image/svg+xml">
+<link rel="manifest" href="./manifest.webmanifest">
 <title>90-Day Recomp Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=4">
 </head>
 <body>
-<div class="app">
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark">90</div>
-      <div>
-        <strong>Recomp tracker</strong>
-        <small id="brand-range">26 Sep – 24 Dec 2026</small>
-      </div>
-    </div>
-    <nav class="nav" aria-label="Sections">
-      <button class="nav-btn" type="button" data-nav="today"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span>Today</span></button>
-      <button class="nav-btn" type="button" data-nav="week"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span>Week</span></button>
-      <button class="nav-btn" type="button" data-nav="diet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16a6.5 6.5 0 0 1-6.5 6.5h-3A6.5 6.5 0 0 1 4 11z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 11V8.5a4 4 0 0 1 8 0V11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span>Diet</span></button>
-      <button class="nav-btn" type="button" data-nav="progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span>Progress</span></button>
-    </nav>
-    <button class="card side-card next-card" type="button" id="side-next" data-action="open-next"></button>
-  </aside>
-
-  <div class="main">
-    <header class="topbar">
-      <button class="back-btn" type="button" id="back-btn" data-action="back" hidden aria-label="Back">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>Back</span>
-      </button>
-      <div class="top-copy">
-        <p class="eyebrow" id="eyebrow">90-day plan</p>
-        <h1 id="top-title">Today</h1>
-        <div class="mini" aria-hidden="true"><span class="mini-fill" id="mini-fill"></span></div>
-      </div>
-      <div class="top-meta" id="top-meta"></div>
-    </header>
-    <p class="warn-banner" id="storage-warn" hidden>This browser is blocking saved data. Progress will disappear when the page closes.</p>
-    <div class="view" id="view"></div>
-  </div>
-
-  <nav class="tabbar" aria-label="Sections">
-    <button class="tab" type="button" data-nav="today"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span>Today</span></button>
-    <button class="tab" type="button" data-nav="week"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span>Week</span></button>
-    <button class="tab" type="button" data-nav="diet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16a6.5 6.5 0 0 1-6.5 6.5h-3A6.5 6.5 0 0 1 4 11z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 11V8.5a4 4 0 0 1 8 0V11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span>Diet</span></button>
-    <button class="tab" type="button" data-nav="progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span>Progress</span></button>
-  </nav>
-</div>
-<div class="toast" id="toast" role="status"></div>
-<input type="file" id="import-file" accept="application/json" hidden>
-
-<script src="js/plans.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<div id="root"></div>
+<script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
