@@ -233,14 +233,11 @@ h1{margin:2px 0 0;font-family:var(--display);font-size:28px;letter-spacing:-.03e
   font-size:11px;font-weight:800;padding:0;
 }
 .cell.is-pad{background:transparent}
-.cell.push{background:rgba(255,143,114,.85);color:#2a100c}
-.cell.pull{background:rgba(121,204,255,.85);color:#062033}
-.cell.legs{background:rgba(185,166,255,.9);color:#1a1238}
-.cell.rest{background:#2a2750;color:#d9def5}
-.cell.holiday{background:rgba(240,176,255,.8);color:#2a1030}
-.cell.is-done{outline:2px solid var(--good);outline-offset:-2px}
+.cell.is-ahead{background:#2a2750;color:#d9def5}
+.cell.is-holiday{background:#8d93a8;color:#1c2030}
+.cell.is-complete{background:#0f6b3c;color:#f3fff7}
+.cell.is-open{background:#e07a7c;color:#3a1212}
 .cell.is-today{outline:2px solid #fff;outline-offset:-2px}
-.cell.is-missed{opacity:.55}
 .legend{display:flex;flex-wrap:wrap;gap:8px 12px;color:var(--muted);font-size:12px;font-weight:700}
 .swatch{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:4px}
 .body-form{display:grid;gap:8px}

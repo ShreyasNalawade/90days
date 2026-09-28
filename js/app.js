@@ -727,13 +727,12 @@ function renderProgress(){
     </section>
     <section class="card">
       <h2>90-day board</h2>
-      <p class="muted" style="margin-top:0">Each square is a day. A green edge means it is logged. Tap a day to open that week.</p>
+      <p class="muted" style="margin-top:0">Green means every exercise that day is done. A darker green or red means more of that day is finished. Gray is a holiday. Tap a day to open that week.</p>
       <div class="legend" style="margin-bottom:12px">
-        <span><i class="swatch" style="background:var(--push)"></i>Push</span>
-        <span><i class="swatch" style="background:var(--pull)"></i>Pull</span>
-        <span><i class="swatch" style="background:var(--legs)"></i>Legs</span>
-        <span><i class="swatch" style="background:#2a3832"></i>Rest</span>
-        <span><i class="swatch" style="background:var(--holiday)"></i>Holiday</span>
+        <span><i class="swatch" style="background:#157a45"></i>All done</span>
+        <span><i class="swatch" style="background:#c4474a"></i>Not finished</span>
+        <span><i class="swatch" style="background:#8d93a8"></i>Holiday</span>
+        <span><i class="swatch" style="background:#2a2750"></i>Ahead</span>
       </div>
       <div class="months-heat">${monthHeats()}</div>
     </section>
@@ -808,6 +807,17 @@ function chartHTML(entries){
     ${entries.length>1?`<text x="${pts[pts.length-1].x}" y="${h-10}" fill="#a3abcc" font-size="13" font-weight="700" text-anchor="end">${esc(fmt(new Date(last.date+'T00:00:00')))}</text>`:''}
   </svg>`;
 }
+function boardTone(day, prog){
+  if(day.holiday) return {cls:'is-holiday', style:''};
+  if(!isPast(day) && !isToday(day)) return {cls:'is-ahead', style:''};
+  const ratio=prog.total?(prog.done?1:prog.checked/prog.total):(prog.done?1:0);
+  if(ratio>=1){
+    return {cls:'is-complete', style:'background:#0f6b3c;color:#f3fff7'};
+  }
+  const light=Math.round(58-ratio*22);
+  const color=light<46?'#fff7f6':'#3a1212';
+  return {cls:'is-open', style:`background:hsl(4 72% ${light}%);color:${color}`};
+}
 function monthHeats(){
   const months=[];
   plan.forEach(day=>{
@@ -824,10 +834,12 @@ function monthHeats(){
     for(let i=0;i<pad;i++) cells+='<span class="cell is-pad"></span>';
     m.days.forEach(day=>{
       const prog=progressOf(day);
-      const kind=kindOf(day);
-      const cls=['cell', kind, prog.done?'is-done':'', isToday(day)?'is-today':'', day.type!=='rest'&&isPast(day)&&!prog.done?'is-missed':''].filter(Boolean).join(' ');
+      const tone=boardTone(day, prog);
+      const cls=['cell', tone.cls, isToday(day)?'is-today':''].filter(Boolean).join(' ');
       const label=day.type==='rest'?day.restLabel:WORKOUTS[day.type].title;
-      cells+=`<button class="${cls}" type="button" data-action="goto-day" data-key="${day.key}" title="${esc(fmt(day.d)+' · '+label)}">${day.d.getDate()}</button>`;
+      const ratio=prog.total?(prog.done?prog.total:prog.checked):0;
+      const detail=day.holiday?'Holiday':(tone.cls==='is-ahead'?'Ahead':`${ratio} of ${prog.total} done`);
+      cells+=`<button class="${cls}" type="button" data-action="goto-day" data-key="${day.key}" style="${tone.style}" title="${esc(fmt(day.d)+' · '+label+' · '+detail)}">${day.d.getDate()}</button>`;
     });
     return `<div><h3 style="margin:0 0 6px">${esc(m.label)}</h3>${dow}<div class="heat">${cells}</div></div>`;
   }).join('');
