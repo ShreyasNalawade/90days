@@ -1,10 +1,12 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { WORKOUTS } from '../data/plans.js';
 import { upsertBody } from '../lib/body.js';
-import { iso, mondayOf } from '../lib/dates.js';
+import { mondayOf } from '../lib/dates.js';
 import { defaultAnchor, firstMonday, focusDay, lastMonday, namesOf, plan, planByKey, position } from '../lib/plan.js';
 import { checkMap, lastWeight, nextOpenGym, progressOf } from '../lib/progress.js';
-import { emptyLog, initialView, load, readBackup, rememberView, save, storageAvailable } from '../lib/storage.js';
+import { emptyLog, load, readBackup, rememberView, save, storageAvailable } from '../lib/storage.js';
+import { pathFor, viewFromPath } from '../routes.js';
 
 const TrackerContext = createContext(null);
 export function useTracker(){ return useContext(TrackerContext); }
@@ -21,26 +23,40 @@ function freshRec(rec){
 }
 
 export function TrackerProvider({children}){
+  const location = useLocation();
+  const navigate = useNavigate();
+  const navigationType = useNavigationType();
+  const view = viewFromPath(location.pathname);
   const [log, setLog] = useState(load);
   const [storageOK, setStorageOK] = useState(storageAvailable);
-  const [view, setView] = useState(initialView);
   const [weekAnchor, setWeekAnchor] = useState(defaultAnchor);
   const [selectedKey, setSelectedKey] = useState(null);
-  const [history, setHistory] = useState([]);
   const [toast, setToast] = useState('');
   const [guideTick, setGuideTick] = useState(0);
+  const [showBack, setShowBack] = useState(()=>view!=='today');
   const toastTimer = useRef(0);
   const pendingScroll = useRef(null);
+  const depth = useRef(0);
+  const lastKey = useRef(null);
   const logRef = useRef(log);
   const viewRef = useRef(view);
   const weekRef = useRef(weekAnchor);
   const keyRef = useRef(selectedKey);
-  const historyRef = useRef(history);
   logRef.current = log;
   viewRef.current = view;
   weekRef.current = weekAnchor;
   keyRef.current = selectedKey;
-  historyRef.current = history;
+
+  useEffect(()=>{
+    if(lastKey.current===location.key) return;
+    if(lastKey.current!==null){
+      if(navigationType==='PUSH') depth.current += 1;
+      else if(navigationType==='POP') depth.current = Math.max(0, depth.current-1);
+    }
+    lastKey.current = location.key;
+    setShowBack(depth.current>0 || view!=='today');
+    rememberView(view);
+  }, [location.key, navigationType, view]);
 
   function ping(msg){
     setToast(msg);
@@ -57,46 +73,23 @@ export function TrackerProvider({children}){
     const rec = fn(freshRec(prev.days[key]), prev);
     commit({...prev, days:{...prev.days, [key]:rec}}, keepScroll);
   }
-  function remember(){
-    const row={view:viewRef.current, weekAnchor:iso(weekRef.current), selectedKey:keyRef.current, scroll:window.scrollY};
-    setHistory(h=>{
-      const next=[...h, row];
-      return next.length>40 ? next.slice(next.length-40) : next;
-    });
-  }
-  function applyView(next){
-    setView(next);
-    rememberView(next);
-    pendingScroll.current = 0;
-  }
-
-  function openSection(name){
+  function prepareSection(name){
     if(name==='plan') name='week';
     if(name==='today' || name==='week' || name==='diet'){
       const day=focusDay();
       setWeekAnchor(mondayOf(day.d));
       setSelectedKey(day.key);
     }
-    if(viewRef.current!==name){
-      remember();
-      applyView(name);
-    }else pendingScroll.current = 0;
+    if(viewRef.current===name) pendingScroll.current = 0;
+  }
+  function openSection(name){
+    if(name==='plan') name='week';
+    prepareSection(name);
+    if(viewRef.current!==name) navigate(pathFor(name));
   }
   function goBack(){
-    const stack=historyRef.current;
-    const prev=stack[stack.length-1];
-    if(!prev){
-      if(viewRef.current!=='today') applyView('today');
-      return;
-    }
-    setHistory(stack.slice(0, -1));
-    const nextView=prev.view==='plan'?'week':prev.view;
-    const parts=prev.weekAnchor.split('-').map(Number);
-    setWeekAnchor(new Date(parts[0], parts[1]-1, parts[2]));
-    setSelectedKey(prev.selectedKey);
-    pendingScroll.current = prev.scroll||0;
-    setView(nextView);
-    rememberView(nextView);
+    if(depth.current>0) navigate(-1);
+    else if(viewRef.current!=='today') navigate('/', {replace:true});
   }
   function shiftWeek(dir){
     const next=new Date(weekRef.current);
@@ -116,14 +109,12 @@ export function TrackerProvider({children}){
   function gotoDay(key){
     const day=planByKey[key];
     if(!day) return;
-    if(viewRef.current!=='week') remember();
     setWeekAnchor(mondayOf(day.d));
     setSelectedKey(key);
-    applyView('week');
+    if(viewRef.current!=='week') navigate(pathFor('week'));
   }
   function showGuide(){
-    if(viewRef.current!=='progress') remember();
-    applyView('progress');
+    if(viewRef.current!=='progress') navigate(pathFor('progress'));
     setGuideTick(n=>n+1);
   }
   function toggleDay(key){
@@ -227,8 +218,8 @@ export function TrackerProvider({children}){
   }, [guideTick]);
 
   const value={
-    log, storageOK, view, weekAnchor, selectedKey, toast, history,
-    openSection, goBack, shiftWeek, thisWeek, selectDay, gotoDay, showGuide,
+    log, storageOK, view, weekAnchor, selectedKey, toast, showBack,
+    openSection, prepareSection, goBack, shiftWeek, thisWeek, selectDay, gotoDay, showGuide,
     toggleDay, toggleEx, setNote, setLiftWeight, fillWeights,
     setBodyWeight, saveBodyForm, deleteBody, toggleMeal, exportData, importData, resetProgress
   };

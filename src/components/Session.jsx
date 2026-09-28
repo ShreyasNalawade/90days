@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { IconRecipe } from './Icons.jsx';
+import { RecipeModal } from './RecipeModal.jsx';
 import { DAYS, WORKOUTS } from '../data/plans.js';
 import { bodyBefore, bodyOn, fluctuationText, weighNote } from '../lib/body.js';
 import { addDays, fmt, fmtLong, num, today } from '../lib/dates.js';
@@ -250,6 +252,7 @@ export function MacroGrid({m}){
 
 export function DietCard({day, on}){
   const {log, toggleMeal} = useTracker();
+  const [recipeMeal, setRecipeMeal] = useState(null);
   const plate=menuFor(day);
   return (
     <article className={'card diet-card'+(on?' is-on':'')}>
@@ -262,15 +265,20 @@ export function DietCard({day, on}){
           const eaten=!!(log.days[day.key] && log.days[day.key].eaten && log.days[day.key].eaten[meal.id]);
           return (
             <div className={'meal'+(eaten?' done':'')} key={meal.id}>
-              <div>
-                <label className="ex-hit">
-                  <input type="checkbox" checked={eaten} aria-label={'Mark '+meal.title+' eaten'} onChange={e=>toggleMeal(day.key, meal.id, e.target.checked)}/>
-                  <span>
-                    <span className="ex-name">{meal.title}</span>
-                    <span className="dish">{meal.dish}</span>
-                  </span>
-                </label>
-                {meal.note ? <p className="muted" style={{margin:'8px 0 0'}}>{meal.note}</p> : null}
+              <div className="meal-head">
+                <div>
+                  <label className="ex-hit">
+                    <input type="checkbox" checked={eaten} aria-label={'Mark '+meal.title+' eaten'} onChange={e=>toggleMeal(day.key, meal.id, e.target.checked)}/>
+                    <span>
+                      <span className="ex-name">{meal.title}</span>
+                      <span className="dish">{meal.dish}</span>
+                    </span>
+                  </label>
+                  {meal.note ? <p className="muted" style={{margin:'8px 0 0'}}>{meal.note}</p> : null}
+                </div>
+                <button className="recipe-btn" type="button" aria-label={'How to make '+meal.dish} onClick={()=>setRecipeMeal(meal)}>
+                  <IconRecipe/>
+                </button>
               </div>
               <ul className="portions">{meal.items.map((it,n)=><li key={n}>{portionLine(it)}</li>)}</ul>
               <MacroGrid m={plate.macros[i]}/>
@@ -278,6 +286,7 @@ export function DietCard({day, on}){
           );
         })}
       </div>
+      <RecipeModal meal={recipeMeal} onClose={()=>setRecipeMeal(null)}/>
     </article>
   );
 }

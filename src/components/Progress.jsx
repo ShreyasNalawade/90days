@@ -4,7 +4,7 @@ import { fmt, num } from '../lib/dates.js';
 import { defaultLogDate, gymCount, isPast, isToday, plan, position } from '../lib/plan.js';
 import { dayTotal, gymStreak, loggedCount, monthBoards, phaseStats, progressOf, sessionsDone } from '../lib/progress.js';
 import { useTracker } from '../state/Tracker.jsx';
-import { openImport } from './Shell.jsx';
+import { openImport } from '../layout/ImportFile.jsx';
 
 export function Progress(){
   const app = useTracker();

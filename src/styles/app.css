@@ -71,6 +71,7 @@ h1{margin:2px 0 0;font-family:var(--display);font-size:28px;letter-spacing:-.03e
   border-top:1px solid var(--line);
   backdrop-filter:blur(16px);
 }
+a.tab,a.nav-btn{text-decoration:none;color:var(--muted)}
 .tab,.nav-btn{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   border:0;background:transparent;color:var(--muted);border-radius:12px;font-size:10px;font-weight:700;
@@ -271,7 +272,33 @@ label.field{display:grid;gap:4px;font-size:12px;font-weight:800;color:var(--mute
 .day-page .side{order:3}
 .diet-cols{display:grid;gap:14px}
 .diet-card.is-on{border-color:rgba(126,176,255,.75);box-shadow:0 0 0 1px var(--accent)}
-.meal{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:16px;padding:12px}
+.meal{position:relative;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:16px;padding:12px}
+.meal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.recipe-btn{
+  flex:0 0 auto;width:36px;height:36px;margin-left:8px;border-radius:12px;padding:0;
+  border:1px solid var(--line);background:rgba(126,176,255,.14);color:var(--accent);
+  display:grid;place-items:center;
+}
+.recipe-btn svg{width:18px;height:18px}
+.modal-back{
+  position:fixed;inset:0;z-index:50;background:rgba(6,4,18,.72);
+  display:grid;place-items:end center;
+  padding:16px 16px calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
+}
+.modal{
+  width:min(560px,100%);max-height:min(78vh,640px);overflow:auto;
+  background:var(--card);border:1px solid var(--line);border-radius:22px;
+  padding:18px;box-shadow:var(--shadow);
+}
+.modal-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.modal h2{margin:4px 0 0;font-family:var(--display);font-size:26px;letter-spacing:-.03em;line-height:1.1}
+.modal-close{
+  flex:0 0 auto;width:36px;height:36px;border-radius:12px;border:1px solid var(--line);
+  background:rgba(0,0,0,.28);color:var(--ink);font-size:22px;line-height:1;
+}
+.recipe-steps{margin:12px 0 0;padding-left:20px}
+.recipe-steps li{margin:8px 0}
+a.recipe-link{display:block;margin-top:16px;text-align:center;text-decoration:none}
 .meal.done{border-color:rgba(61,220,151,.45);background:rgba(61,220,151,.06)}
 .dish{display:block;margin-top:2px;font-weight:800}
 .macro-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
@@ -321,6 +348,7 @@ label.field{display:grid;gap:4px;font-size:12px;font-weight:800;color:var(--mute
   .diet-cols .meal,.diet-wide .meal{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1.35fr) 230px;gap:4px 16px;align-items:start}
   .diet-cols .meal .macro-grid,.diet-cols .meal .portions,.diet-wide .meal .macro-grid,.diet-wide .meal .portions{margin-top:0}
   .toast{bottom:24px}
+  .modal-back{place-items:center;padding:24px}
   .display{font-size:76px}
 }
 @media(max-width:520px){

@@ -1,24 +1,25 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Diet } from './components/Diet.jsx';
 import { Progress } from './components/Progress.jsx';
-import { Shell } from './components/Shell.jsx';
 import { Today } from './components/Today.jsx';
 import { Week } from './components/Week.jsx';
-import { TrackerProvider, useTracker } from './state/Tracker.jsx';
-
-function Screen(){
-  const {view} = useTracker();
-  if(view==='week') return <Week/>;
-  if(view==='diet') return <Diet/>;
-  if(view==='progress') return <Progress/>;
-  return <Today/>;
-}
+import { AppLayout } from './layout/AppLayout.jsx';
+import { TrackerProvider } from './state/Tracker.jsx';
 
 export default function App(){
   return (
-    <TrackerProvider>
-      <Shell>
-        <Screen/>
-      </Shell>
-    </TrackerProvider>
+    <BrowserRouter>
+      <TrackerProvider>
+        <Routes>
+          <Route element={<AppLayout/>}>
+            <Route index element={<Today/>}/>
+            <Route path="week" element={<Week/>}/>
+            <Route path="diet" element={<Diet/>}/>
+            <Route path="progress" element={<Progress/>}/>
+            <Route path="*" element={<Navigate to="/" replace/>}/>
+          </Route>
+        </Routes>
+      </TrackerProvider>
+    </BrowserRouter>
   );
 }

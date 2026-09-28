@@ -5,6 +5,7 @@ RewriteRule ^(src|node_modules|js|css)(/|$) - [F,L]
 RewriteRule ^(package\.json|package-lock\.json|vite\.config\.js)$ - [F,L]
 
 DirectoryIndex dist/index.html
-RewriteRule ^index\.html$ dist/index.html [L]
 RewriteRule ^assets/(.*)$ dist/assets/$1 [L]
 RewriteRule ^manifest\.webmanifest$ dist/manifest.webmanifest [L]
+RewriteRule ^(week|diet|progress)/?$ dist/index.html [L]
+RewriteRule ^index\.html$ dist/index.html [L]
