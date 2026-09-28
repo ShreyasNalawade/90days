@@ -64,7 +64,7 @@ h1{margin:2px 0 0;font-family:var(--display);font-size:28px;letter-spacing:-.03e
 .view-wrap{max-width:1080px;margin:0 auto}
 .tabbar{
   position:fixed;left:0;right:0;bottom:0;z-index:30;
-  display:grid;grid-template-columns:repeat(5,1fr);
+  display:grid;grid-template-columns:repeat(4,1fr);
   height:calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding:6px 6px env(safe-area-inset-bottom);
   background:rgba(14,12,36,.94);
@@ -247,9 +247,23 @@ h1{margin:2px 0 0;font-family:var(--display);font-size:28px;letter-spacing:-.03e
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 label.field{display:grid;gap:4px;font-size:12px;font-weight:800;color:var(--muted)}
 .field input{background:#100e28;border:1px solid var(--line);border-radius:12px;padding:11px;color:var(--ink);font-weight:700}
+.weigh-in{border-color:rgba(126,176,255,.55)}
+.weigh-box{position:relative;display:block}
+.weigh-box input{
+  width:100%;font-family:var(--display);font-size:36px;letter-spacing:-.03em;
+  padding:12px 64px 12px 14px;background:#100e28;border:1px solid var(--line);
+  border-radius:14px;color:var(--ink);
+}
+.weigh-box input::-webkit-outer-spin-button,
+.weigh-box input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.weigh-box input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.weigh-box .unit{
+  position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  font-size:16px;font-weight:800;color:var(--muted);pointer-events:none;
+}
 .err{color:#ffb4a8;font-size:13px;min-height:1.2em;margin:0}
 .log-row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
-.chart{width:100%;height:88px;display:block}
+.chart{width:100%;height:220px;display:block}
 .guide-grid{display:grid;gap:10px}
 .holiday-list{margin:8px 0 0;padding-left:18px;color:var(--muted)}
 .holiday-list li{margin:4px 0}

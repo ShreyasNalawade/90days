@@ -3,7 +3,7 @@ const STORAGE = 'shreyas_90_day_recomp_v2';
 const OLD = 'shreyas_90_day_recomp_v1';
 
 
-const TITLES = {today:'Today', week:'Week', plan:'Plan', diet:'Diet', progress:'Progress'};
+const TITLES = {today:'Today', week:'Week', diet:'Diet', progress:'Progress'};
 
 function iso(d){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -84,13 +84,11 @@ function save(){
 let view='today';
 try{
   const saved=sessionStorage.getItem('recomp-view');
-  if(['today','week','plan','diet','progress'].includes(saved)) view=saved;
+  if(saved==='plan') view='week';
+  else if(['today','week','diet','progress'].includes(saved)) view=saved;
 }catch(e){}
 let weekAnchor=defaultAnchor();
 let selectedKey=null;
-let filter='all';
-let query='';
-let openKey=null;
 let chromeNextKey=null;
 const history=[];
 let toastTimer=0;
@@ -105,6 +103,7 @@ function defaultAnchor(){
   return mondayOf(focusDay().d);
 }
 function openSection(name){
+  if(name==='plan') name='week';
   if(name==='today' || name==='week' || name==='diet'){
     const day=focusDay();
     weekAnchor=mondayOf(day.d);
@@ -214,7 +213,7 @@ function toast(msg){
   toastTimer=setTimeout(()=>el.classList.remove('show'), 2200);
 }
 function remember(){
-  history.push({view, weekAnchor:iso(weekAnchor), selectedKey, openKey, query, filter, scroll:window.scrollY});
+  history.push({view, weekAnchor:iso(weekAnchor), selectedKey, scroll:window.scrollY});
   if(history.length>40) history.shift();
 }
 function setView(next){
@@ -224,11 +223,6 @@ function setView(next){
   render(false);
 }
 function goBack(){
-  if(view==='plan' && openKey){
-    openKey=null;
-    render(true);
-    return;
-  }
   const prev=history.pop();
   if(!prev){
     if(view!=='today'){
@@ -238,20 +232,18 @@ function goBack(){
     }
     return;
   }
-  view=prev.view;
+  view=prev.view==='plan'?'week':prev.view;
   const parts=prev.weekAnchor.split('-').map(Number);
   weekAnchor=new Date(parts[0], parts[1]-1, parts[2]);
   selectedKey=prev.selectedKey;
-  openKey=prev.openKey;
-  query=prev.query;
-  filter=prev.filter;
   try{sessionStorage.setItem('recomp-view', view)}catch(e){}
   render(false);
   window.scrollTo(0, prev.scroll||0);
 }
 function render(keepScroll){
+  if(view==='plan') view='week';
   const y=keepScroll?window.scrollY:0;
-  document.getElementById('view').innerHTML='<div class="view-wrap">'+({today:renderToday, week:renderWeek, plan:renderPlan, diet:renderDiet, progress:renderProgress}[view]())+'</div>';
+  document.getElementById('view').innerHTML='<div class="view-wrap">'+({today:renderToday, week:renderWeek, diet:renderDiet, progress:renderProgress}[view]())+'</div>';
   document.querySelectorAll('[data-nav]').forEach(btn=>{
     const on=btn.dataset.nav===view;
     btn.classList.toggle('active', on);
@@ -272,7 +264,7 @@ function updateChrome(){
     brand.textContent=START.toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' – '+END.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
   }
   document.getElementById('top-title').textContent=TITLES[view];
-  document.getElementById('back-btn').hidden=!(history.length || (view==='plan' && openKey) || view!=='today');
+  document.getElementById('back-btn').hidden=!(history.length || view!=='today');
   document.getElementById('eyebrow').textContent = pos.mode==='before'
     ? (pos.days===1?'Starts tomorrow':'Starts in '+pos.days+' days')
     : pos.mode==='after'
@@ -510,6 +502,7 @@ function exerciseHTML(day){
     <div class="session-label"><h3>After · stretching</h3><span class="muted">${stretchDone}/${parts.stretch.length}</span></div>
     <p class="muted" style="margin:0">Hold each stretch. Do not bounce. Stop if a shoulder pinches, slips, or feels unstable.</p>
     ${parts.stretch.map(item=>stepRow(day, item, prog)).join('')}
+    ${weighInHTML(day)}
     <label class="field">Session note
       <textarea class="notes" data-action="note" data-key="${day.key}" placeholder="Sleep, energy, a sore spot, or the weight you want next time.">${esc(rec.notes||'')}</textarea>
     </label>
@@ -530,6 +523,7 @@ function restHTML(day){
     </div>
     <div class="session-label"><h3>Easy mobility</h3><span class="muted">${done}/${parts.stretch.length}</span></div>
     ${parts.stretch.map(item=>stepRow(day, item, prog)).join('')}
+    ${weighInHTML(day)}
     <label class="field">Note
       <textarea class="notes" data-action="note" data-key="${day.key}" placeholder="How recovery felt.">${esc(state.days[day.key]?.notes||'')}</textarea>
     </label>
@@ -641,75 +635,48 @@ function renderWeek(){
   </div>`;
 }
 
-function planMatches(day){
-  const prog=progressOf(day);
-  const q=query.trim().toLowerCase();
-  if(q){
-    const plate=menuFor(day);
-    const blob=[day.key, fmt(day.d), fmtLong(day.d), day.phase, day.restLabel, plate.name, plate.meals.map(m=>m.dish+' '+m.items.map(it=>it.label).join(' ')).join(' '), day.type==='rest'?'rest holiday recovery':WORKOUTS[day.type].title+' '+WORKOUTS[day.type].focus+' '+WORKOUTS[day.type].exercises.map(e=>e.name).join(' ')].join(' ').toLowerCase();
-    if(!blob.includes(q)) return false;
-  }
-  if(filter==='todo' && prog.done) return false;
-  if(filter==='done' && !prog.done) return false;
-  if(filter==='gym' && day.type==='rest') return false;
-  if(filter==='rest' && day.type!=='rest') return false;
-  if(filter==='gaps' && !(day.type!=='rest' && isPast(day) && !prog.done)) return false;
-  return true;
+function bodyRows(){
+  return [...state.body].filter(e=>num(e.weight)!=null).sort((a,b)=>a.date<b.date?-1:1);
 }
-function renderPlan(){
-  const chips=[['all','All'],['todo','To do'],['done','Done'],['gym','Gym'],['rest','Rest'],['gaps','Not logged']];
-  const months=[];
-  plan.filter(planMatches).forEach(day=>{
-    const id=day.key.slice(0,7);
-    let bucket=months.find(m=>m.id===id);
-    if(!bucket){bucket={id, label:day.d.toLocaleDateString('en-IN',{month:'long', year:'numeric'}), days:[]}; months.push(bucket)}
-    bucket.days.push(day);
-  });
-  const seen=[];
-  plan.forEach(day=>{
-    const id=day.key.slice(0,7);
-    if(!seen.some(m=>m.id===id)) seen.push({id, name:day.d.toLocaleDateString('en-IN',{month:'long'})});
-  });
-  const jumps=seen.map(m=>`<button class="jump" type="button" data-action="jump-month" data-month="${m.id}">${esc(m.name)}</button>`).join('');
-  const body=months.length?months.map(m=>{
-    const all=plan.filter(d=>d.key.startsWith(m.id) && d.type!=='rest');
-    const done=all.filter(d=>progressOf(d).done).length;
-    return `<h2 class="month-head" id="month-${m.id}"><span>${esc(m.label)}</span><span class="muted" style="font-size:14px">${done} of ${all.length} sessions</span></h2>
-      ${m.days.map(planRow).join('')}`;
-  }).join(''):`<div class="empty">Nothing matches. <button class="linkish" type="button" data-action="clear-filters">Show every day</button></div>`;
-  return `<div class="tools">
-      <input class="search" id="search" placeholder="Search a date, lift, or meal" value="${esc(query)}" autocomplete="off">
-      <div class="chips">${chips.map(([id,label])=>`<button class="chip ${filter===id?'active':''}" type="button" data-action="filter" data-filter="${id}">${label}</button>`).join('')}</div>
-      <div class="jumps">${jumps}</div>
-    </div>
-    <div id="plan-list">${body}</div>
-    <details class="card" style="margin-top:14px" id="closures">
-      <summary><strong>Closed days</strong></summary>
-      <p class="muted">The gym plan treats every Sunday as closed, plus these Maharashtra public holidays. Other observance dates are training days unless you decide otherwise.</p>
-      <ul class="holiday-list">
-        <li>2 Oct — Gandhi Jayanti</li>
-        <li>20 Oct — Dasara / Vijayadashami</li>
-        <li>8 Nov — Diwali Amavasya (also a Sunday)</li>
-        <li>10 Nov — Diwali / Bali Pratipada</li>
-        <li>24 Nov — Guru Nanak Jayanti</li>
-      </ul>
-    </details>`;
+function bodyOn(date){
+  return state.body.find(e=>e.date===date)||null;
 }
-function planRow(day){
-  const prog=progressOf(day);
-  const kind=kindOf(day);
-  const plate=menuFor(day);
-  const title=day.type==='rest'?day.restLabel:WORKOUTS[day.type].title+' · '+WORKOUTS[day.type].focus;
-  const missed=day.type!=='rest' && isPast(day) && !prog.done;
-  const status=prog.done?'Done':(day.type!=='rest'&&prog.checked?prog.checked+'/'+prog.total:isToday(day)?'Today':missed?'Not logged':'');
-  const cls=['plan-row', isToday(day)?'is-today':'', prog.done?'is-done':'', missed?'is-missed':''].filter(Boolean).join(' ');
-  const open=openKey===day.key;
-  return `<button class="${cls}" type="button" data-action="open-plan" data-key="${day.key}" id="row-${day.key}">
-      <span class="plan-date"><b>${String(day.d.getDate()).padStart(2,'0')}</b><small>${day.d.toLocaleDateString('en-IN',{weekday:'short'})}</small></span>
-      <span class="plan-copy"><strong>${esc(title)}</strong><em>${esc(day.phase)}${day.type==='rest'?'':' · '+WORKOUTS[day.type].exercises.length+' lifts'} · ${esc(plate.name)}</em></span>
-      <span class="plan-status"><span class="badge ${kind}">${day.type==='rest'?(day.holiday?'OFF':'REST'):day.type.toUpperCase()}</span><br>${esc(status)}</span>
-    </button>
-    ${open?`<div class="expand">${day.type==='rest'?restHTML(day):exerciseHTML(day)}${dietEmbed(day)}</div>`:''}`;
+function bodyBefore(date){
+  const rows=bodyRows().filter(e=>e.date<date);
+  return rows.length?rows[rows.length-1]:null;
+}
+function fluctuationText(weight, previous){
+  if(!previous) return '';
+  const d=Math.round((weight-previous.weight)*10)/10;
+  const when=fmt(new Date(previous.date+'T00:00:00'));
+  if(d===0) return 'Same as '+when;
+  return (d>0?'+':'')+d+' kg from '+when;
+}
+function saveDayWeight(date, weight){
+  const existing=bodyOn(date);
+  state.body=state.body.filter(e=>e.date!==date);
+  if(weight!=null) state.body.push({date, weight, waist:existing?existing.waist:null});
+  state.body.sort((a,b)=>a.date<b.date?-1:1);
+  save();
+}
+function weighInHTML(day){
+  const cur=bodyOn(day.key);
+  const prev=bodyBefore(day.key);
+  const note=cur && num(cur.weight)!=null
+    ? (fluctuationText(cur.weight, prev)||'Saved for this day.')
+    : (prev?`Last weigh-in ${prev.weight} kg · ${fmt(new Date(prev.date+'T00:00:00'))}`:'Type today’s weight. Progress draws the line from these numbers.');
+  const value=cur&&num(cur.weight)!=null?esc(cur.weight):'';
+  return `<section class="card weigh-in">
+    <h3>Body weight</h3>
+    <p class="muted" style="margin:0 0 8px">After stretching, enter this day’s weight.</p>
+    <label class="field">Weight (kg)
+      <span class="weigh-box">
+        <input type="number" inputmode="decimal" step="0.1" min="20" max="400" autocomplete="off" placeholder="78.5" aria-label="Body weight in kilograms" data-action="body-weight" data-key="${day.key}" value="${value}">
+        <span class="unit">kg</span>
+      </span>
+    </label>
+    <p class="muted" data-body-note style="margin:8px 0 0">${esc(note)}</p>
+  </section>`;
 }
 
 function renderProgress(){
@@ -720,14 +687,22 @@ function renderProgress(){
   const gaps=plan.filter(d=>d.type!=='rest' && isPast(d) && !progressOf(d).done).length;
   const pos=position();
   const activePhase=pos.mode==='during'?pos.day.phase:pos.mode==='after'?'Intensification':'Foundation';
-  const entries=[...state.body].filter(e=>num(e.weight)!=null).sort((a,b)=>a.date<b.date?-1:1);
+  const entries=bodyRows();
   const first=entries[0], last=entries[entries.length-1];
-  let change='Log a starting weight. During a recomp the scale can stay flat, so waist is worth tracking too.';
+  let change='Log today’s weight on the workout day. The line appears after the second weigh-in.';
   if(first && last && entries.length>1){
-    const d=Math.round((last.weight-first.weight)*10)/10;
-    change = d<0 ? `Down ${Math.abs(d)} kg from the first weigh-in.` : d>0 ? `Up ${d} kg from the first weigh-in.` : 'Same as the first weigh-in.';
-  }else if(first) change=`Latest weigh-in is ${first.weight} kg.`;
+    const step=Math.round((last.weight-entries[entries.length-2].weight)*10)/10;
+    const overall=Math.round((last.weight-first.weight)*10)/10;
+    const stepText=step===0?'same as the weigh-in before':(step>0?`up ${step} kg`:`down ${Math.abs(step)} kg`)+' from the weigh-in before';
+    const overallText=overall===0?'Level with the first weigh-in.':(overall>0?`Up ${overall} kg`:`Down ${Math.abs(overall)} kg`)+' from the first weigh-in.';
+    change=`Latest is ${last.weight} kg, ${stepText}. ${overallText}`;
+  }else if(first) change=`Latest weigh-in is ${first.weight} kg. Log one more day to see the line.`;
   return `<div class="stack">
+    <section class="card">
+      <h2>Body weight</h2>
+      <p class="muted" style="margin-top:0">${change}</p>
+      ${chartHTML(entries)}
+    </section>
     <section class="metrics">
       <div class="metric"><b>${pct}%</b><span>Days logged</span></div>
       <div class="metric"><b>${sessions}<span style="font-size:16px;color:var(--muted)">/${gymCount}</span></b><span>Gym sessions</span></div>
@@ -764,9 +739,7 @@ function renderProgress(){
     </section>
     <div class="split">
       <section class="card">
-        <h2>Body log</h2>
-        <p class="muted" style="margin-top:0">${change}</p>
-        ${chartHTML(entries)}
+        <h2>Edit a weigh-in</h2>
         <form class="body-form" id="body-form">
           <div class="form-row">
             <label class="field">Date<input type="date" name="date" required value="${esc(defaultLogDate())}"></label>
@@ -807,17 +780,33 @@ function defaultLogDate(){
   return iso(t);
 }
 function chartHTML(entries){
-  if(entries.length<2) return '';
-  const w=320,h=88,pad=8;
+  if(!entries.length) return '';
+  const w=640,h=220,l=78,r=16,t=22,b=36;
   const vals=entries.map(e=>e.weight);
   const min=Math.min(...vals), max=Math.max(...vals);
   const span=(max-min)||1;
+  const innerW=w-l-r, innerH=h-t-b;
   const pts=entries.map((e,i)=>{
-    const x=pad+(i*(w-pad*2))/(entries.length-1);
-    const y=h-pad-((e.weight-min)/span)*(h-pad*2);
-    return x.toFixed(1)+','+y.toFixed(1);
+    const x=entries.length===1 ? l+innerW/2 : l+i*innerW/(entries.length-1);
+    const y=min===max ? t+innerH/2 : t+innerH-((e.weight-min)/span)*innerH;
+    return {x, y, e};
   });
-  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Weight trend"><polyline fill="none" stroke="#7eb0ff" stroke-width="3" points="${pts.join(' ')}"/><circle cx="${pts[pts.length-1].split(',')[0]}" cy="${pts[pts.length-1].split(',')[1]}" r="4" fill="#7eb0ff"/></svg>`;
+  const line=pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+  const base=t+innerH;
+  const area=`${pts[0].x.toFixed(1)},${base.toFixed(1)} ${line} ${pts[pts.length-1].x.toFixed(1)},${base.toFixed(1)}`;
+  const dots=pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5" fill="#7eb0ff" stroke="#0c0a22" stroke-width="1.5"><title>${esc(fmt(new Date(p.e.date+'T00:00:00'), true))} · ${esc(p.e.weight)} kg</title></circle>`).join('');
+  const first=entries[0], last=entries[entries.length-1];
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Body weight over time">
+    <text x="4" y="16" fill="#a3abcc" font-size="13" font-weight="700">${max} kg</text>
+    <text x="4" y="${base - 4}" fill="#a3abcc" font-size="13" font-weight="700">${min} kg</text>
+    <line x1="${l}" y1="${t}" x2="${l}" y2="${base}" stroke="rgba(176,190,255,.28)"/>
+    <line x1="${l}" y1="${base}" x2="${w-r}" y2="${base}" stroke="rgba(176,190,255,.28)"/>
+    <polygon points="${area}" fill="rgba(126,176,255,.18)"/>
+    <polyline fill="none" stroke="#7eb0ff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="${line}"/>
+    ${dots}
+    <text x="${pts[0].x}" y="${h-10}" fill="#a3abcc" font-size="13" font-weight="700" text-anchor="${entries.length===1?'middle':'start'}">${esc(fmt(new Date(first.date+'T00:00:00')))}</text>
+    ${entries.length>1?`<text x="${pts[pts.length-1].x}" y="${h-10}" fill="#a3abcc" font-size="13" font-weight="700" text-anchor="end">${esc(fmt(new Date(last.date+'T00:00:00')))}</text>`:''}
+  </svg>`;
 }
 function monthHeats(){
   const months=[];
@@ -899,21 +888,6 @@ function shiftWeek(dir){
   selectedKey=null;
   render(false);
 }
-function openPlan(key){
-  openKey=openKey===key?null:key;
-  render(true);
-  if(openKey) document.getElementById('row-'+openKey)?.scrollIntoView({block:'nearest'});
-}
-function refreshPlanList(){
-  const list=document.getElementById('plan-list');
-  if(!list){render(true); return}
-  const current=renderPlan();
-  const holder=document.createElement('div');
-  holder.innerHTML=current;
-  const next=holder.querySelector('#plan-list');
-  if(next) list.innerHTML=next.innerHTML;
-  document.querySelectorAll('[data-filter]').forEach(btn=>btn.classList.toggle('active', btn.dataset.filter===filter));
-}
 function exportData(){
   const payload={version:2, exported:new Date().toISOString(), days:state.days, body:state.body};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
@@ -985,13 +959,9 @@ document.addEventListener('click', e=>{
   else if(a==='select-day'){selectedKey=t.dataset.key; render(true)}
   else if(a==='goto-day') gotoDay(t.dataset.key);
   else if(a==='open-next' && chromeNextKey) gotoDay(chromeNextKey);
-  else if(a==='open-plan') openPlan(t.dataset.key);
   else if(a==='toggle-day') toggleDay(t.dataset.key);
   else if(a==='use-last') useWeight(t.dataset.key, t.dataset.name, t.dataset.value);
   else if(a==='fill-weights') fillWeights(t.dataset.key);
-  else if(a==='filter'){filter=t.dataset.filter; refreshPlanList()}
-  else if(a==='clear-filters'){filter='all'; query=''; render(true)}
-  else if(a==='jump-month') document.getElementById('month-'+t.dataset.month)?.scrollIntoView({behavior:'smooth', block:'start'});
   else if(a==='show-guide'){setView('progress'); document.getElementById('guide')?.scrollIntoView({behavior:'smooth'})}
   else if(a==='export') exportData();
   else if(a==='import') document.getElementById('import-file').click();
@@ -1013,9 +983,23 @@ document.addEventListener('change', e=>{
 });
 document.addEventListener('input', e=>{
   const t=e.target;
-  if(t.id==='search'){
-    query=t.value;
-    refreshPlanList();
+  if(t.dataset.action==='body-weight'){
+    const key=t.dataset.key;
+    const raw=t.value.trim();
+    const note=t.closest('.card').querySelector('[data-body-note]');
+    if(!raw){
+      saveDayWeight(key, null);
+      const prev=bodyBefore(key);
+      note.textContent=prev?`Last weigh-in ${prev.weight} kg · ${fmt(new Date(prev.date+'T00:00:00'))}`:'Log it once for this day. Progress draws the line from these numbers.';
+      return;
+    }
+    const weight=num(raw);
+    if(weight==null || weight<20 || weight>400){
+      if(!/^\d{0,2}\.?$/.test(raw) && !/^\d{1,3}\.$/.test(raw)) note.textContent='Enter a weight in kilograms.';
+      return;
+    }
+    saveDayWeight(key, weight);
+    note.textContent=fluctuationText(weight, bodyBefore(key))||'Saved for this day.';
     return;
   }
   if(t.dataset.action==='note'){
