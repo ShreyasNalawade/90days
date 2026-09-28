@@ -129,6 +129,9 @@ a.tab,a.nav-btn{text-decoration:none;color:var(--muted)}
 .session-label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:2px 0 0}
 .session-label h3{margin:0;font-family:var(--display);font-size:20px;letter-spacing:-.02em}
 .ex{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:16px;padding:12px}
+.ex-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.ex-top .ex-hit{flex:1;min-width:0}
+.rule.with-guide{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .ex.done{border-color:rgba(61,220,151,.45);background:rgba(61,220,151,.06)}
 .ex-hit{display:flex;gap:12px;align-items:flex-start;cursor:pointer}
 .ex-hit input{width:26px;height:26px;margin-top:1px;accent-color:var(--good);flex:0 0 auto}

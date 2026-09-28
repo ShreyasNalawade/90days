@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { IconRecipe } from './Icons.jsx';
+import { MoveModal } from './MoveModal.jsx';
 import { RecipeModal } from './RecipeModal.jsx';
 import { DAYS, WORKOUTS } from '../data/plans.js';
 import { bodyBefore, bodyOn, fluctuationText, weighNote } from '../lib/body.js';
@@ -76,22 +77,33 @@ export function SideFacts({day}){
   );
 }
 
-function StepRow({day, item, on}){
+function GuideButton({name, onOpen}){
+  return (
+    <button className="recipe-btn" type="button" aria-label={'How to do '+name} onClick={()=>onOpen(name)}>
+      <IconRecipe/>
+    </button>
+  );
+}
+
+function StepRow({day, item, on, onOpen}){
   const {toggleEx} = useTracker();
   return (
     <div className={'ex'+(on?' done':'')}>
-      <label className="ex-hit">
-        <input type="checkbox" checked={on} onChange={()=>toggleEx(day.key, item.name)}/>
-        <span>
-          <span className="ex-name">{item.name}</span>
-          <span className="ex-rx"><span className="rest-tag">{item.how}</span></span>
-        </span>
-      </label>
+      <div className="ex-top">
+        <label className="ex-hit">
+          <input type="checkbox" checked={on} onChange={()=>toggleEx(day.key, item.name)}/>
+          <span>
+            <span className="ex-name">{item.name}</span>
+            <span className="ex-rx"><span className="rest-tag">{item.how}</span></span>
+          </span>
+        </label>
+        <GuideButton name={item.name} onOpen={onOpen}/>
+      </div>
     </div>
   );
 }
 
-function LiftRow({day, ex, on}){
+function LiftRow({day, ex, on, onOpen}){
   const {log, toggleEx, setLiftWeight} = useTracker();
   const rx=prescription(ex, day.phase);
   const last=lastWeight(day.key, ex.name, log.days);
@@ -107,13 +119,16 @@ function LiftRow({day, ex, on}){
   }
   return (
     <div className={'ex'+(on?' done':'')}>
-      <label className="ex-hit">
-        <input type="checkbox" checked={on} onChange={()=>toggleEx(day.key, ex.name)}/>
-        <span>
-          <span className="ex-name">{ex.name}</span>
-          <span className="ex-rx"><span className="rx">{rx.text}</span><span className="rest-tag">Rest {ex.rest}</span></span>
-        </span>
-      </label>
+      <div className="ex-top">
+        <label className="ex-hit">
+          <input type="checkbox" checked={on} onChange={()=>toggleEx(day.key, ex.name)}/>
+          <span>
+            <span className="ex-name">{ex.name}</span>
+            <span className="ex-rx"><span className="rx">{rx.text}</span><span className="rest-tag">Rest {ex.rest}</span></span>
+          </span>
+        </label>
+        <GuideButton name={ex.name} onOpen={onOpen}/>
+      </div>
       {ex.hold ? null : (
         <div className="ex-log">
           <input className="wt" inputMode="decimal" autoComplete="off" placeholder="kg" aria-label={'Weight for '+ex.name} value={cur} onChange={e=>setLiftWeight(day.key, ex.name, e.target.value)}/>
@@ -171,6 +186,7 @@ export function WeighIn({day}){
 
 export function Exercise({day}){
   const {log, toggleDay, fillWeights, setNote} = useTracker();
+  const [guide, setGuide] = useState(null);
   const w=WORKOUTS[day.type];
   const parts=sessionParts(day);
   const rec=log.days[day.key]||{weights:{}, notes:''};
@@ -194,14 +210,18 @@ export function Exercise({day}){
       </ol>
       <div className="session-label"><h3>Before · warm-up</h3><span className="muted">{warmDone}/{parts.warmup.length}</span></div>
       <p className="muted block-note" style={{margin:0}}>Do this before the first heavy set. Keep every move easy, especially around the shoulder.</p>
-      {parts.warmup.map(item=><StepRow key={item.name} day={day} item={item} on={!!prog.map[item.name]}/>)}
+      {parts.warmup.map(item=><StepRow key={item.name} day={day} item={item} on={!!prog.map[item.name]} onOpen={setGuide}/>)}
       <div className="session-label"><h3>Workout</h3><span className="muted">{liftDone}/{parts.lifts.length}</span></div>
       {canFill ? <button className="btn btn-ghost" type="button" onClick={()=>fillWeights(day.key)}>Fill empty weights from last time</button> : null}
-      {parts.lifts.map(ex=><LiftRow key={ex.name} day={day} ex={ex} on={!!prog.map[ex.name]}/>)}
-      <p className="rule">After the lifts: {w.cardio}. Then stretch.</p>
+      {parts.lifts.map(ex=><LiftRow key={ex.name} day={day} ex={ex} on={!!prog.map[ex.name]} onOpen={setGuide}/>)}
+      <p className="rule with-guide">
+        <span>After the lifts: {w.cardio}. Then stretch.</span>
+        <GuideButton name={w.cardio} onOpen={setGuide}/>
+      </p>
       <div className="session-label"><h3>After · stretching</h3><span className="muted">{stretchDone}/{parts.stretch.length}</span></div>
       <p className="muted" style={{margin:0}}>Hold each stretch. Do not bounce. Stop if a shoulder pinches, slips, or feels unstable.</p>
-      {parts.stretch.map(item=><StepRow key={item.name} day={day} item={item} on={!!prog.map[item.name]}/>)}
+      {parts.stretch.map(item=><StepRow key={item.name} day={day} item={item} on={!!prog.map[item.name]} onOpen={setGuide}/>)}
+      <MoveModal name={guide} onClose={()=>setGuide(null)}/>
       <WeighIn day={day}/>
       <label className="field">Session note
         <textarea className="notes" placeholder="Sleep, energy, a sore spot, or the weight you want next time." value={rec.notes||''} onChange={e=>setNote(day.key, e.target.value)}/>
@@ -214,6 +234,7 @@ export function Exercise({day}){
 
 export function Rest({day}){
   const {log, toggleDay, setNote} = useTracker();
+  const [guide, setGuide] = useState(null);
   const prog=progressOf(day, log.days);
   const parts=sessionParts(day);
   const nxt=nextGym(day.key);
@@ -225,7 +246,8 @@ export function Rest({day}){
         <p className="muted" style={{margin:0}}>No gym session. Sleep, food, and water come first. An easy walk and these stretches are recovery, not a workout.</p>
       </div>
       <div className="session-label"><h3>Easy mobility</h3><span className="muted">{done}/{parts.stretch.length}</span></div>
-      {parts.stretch.map(item=><StepRow key={item.name} day={day} item={item} on={!!prog.map[item.name]}/>)}
+      {parts.stretch.map(item=><StepRow key={item.name} day={day} item={item} on={!!prog.map[item.name]} onOpen={setGuide}/>)}
+      <MoveModal name={guide} onClose={()=>setGuide(null)}/>
       <WeighIn day={day}/>
       <label className="field">Note
         <textarea className="notes" placeholder="How recovery felt." value={log.days[day.key]?.notes||''} onChange={e=>setNote(day.key, e.target.value)}/>
